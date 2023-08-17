@@ -2,9 +2,9 @@ const fs = require("fs");
 const path = require("path");
 const cloudinary = require("cloudinary").v2;
 
-// if (!fs.existsSync("./uploads")) {
-//   fs.mkdirSync("./uploads");
-// }
+  // if (!fs.existsSync("./uploads")) {
+  //   fs.mkdirSync("./uploads");
+  // }
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
