@@ -7,7 +7,7 @@ const {
   deleteEmployee,
 } = require("../controller/EmployeeController");
 const router = express.Router();
-const {upload} = require("../services/multer")
+const upload = require("../services/multer")
 
 router.route("/create").post(upload.single("image"),createEmployee);
 

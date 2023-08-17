@@ -5,6 +5,7 @@ const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const EmployeePresence = require("../models/EmployeePresence");
 const uploadToCloudinary = require("../services/uploadCloudinary");
 const cloudinary = require("cloudinary").v2;
+const { Readable } = require("stream");
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -43,7 +44,7 @@ module.exports.createEmployee = catchAsyncErrors(async (req, res, next) => {
 
     // image provided
     if (req.file) {
-      console.log("image provided++++")
+      console.log("image provided++++");
       var locaFilePath = req.file.path;
 
       // upload image in cloudinory
@@ -67,7 +68,7 @@ module.exports.createEmployee = catchAsyncErrors(async (req, res, next) => {
         employee,
       });
     } else {
-      console.log("image not provided++++")
+      console.log("image not provided++++");
 
       const employee = await Employee.create(req.body);
 
@@ -149,7 +150,6 @@ module.exports.getSingleEmployee = catchAsyncErrors(async (req, res, next) => {
 module.exports.updateEmployee = catchAsyncErrors(async (req, res, next) => {
   const id = req.params.id;
 
-
   if (req.body.password) {
     return res.status(400).json({
       success: false,
@@ -166,22 +166,47 @@ module.exports.updateEmployee = catchAsyncErrors(async (req, res, next) => {
     });
   }
   if (req.file) {
+    console.log("With image");
+
     if (employee.cloudinary_id) {
       // Delete image from cloudinary
       await cloudinary.uploader.destroy(employee.cloudinary_id);
     }
 
-    // Upload image to cloudinary
-    var locaFilePath = req.file.path;
+    // // Upload image to cloudinary
+    // var locaFilePath = req.file.path;
+    // console.log("local+++",req.file.buffer)
 
     // var result = await uploadToCloudinary(locaFilePath);
-    const result = await cloudinary.uploader.upload(req.file.path);
+
+    // Upload image to cloudinary using upload_stream
+    const uploadResponse = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "main", // You can adjust the folder where the image is uploaded
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result);
+          }
+        }
+      );
+      // Create a readable stream from the buffer and pipe it to uploadStream
+      const bufferStream = new Readable();
+      bufferStream.push(req.file.buffer);
+      bufferStream.push(null);
+
+      bufferStream.pipe(uploadStream);
+    });
+    
 
     const data = {
       userName: req.body.userName || employee.userName,
       lastName: req.body.lastName || employee.lastName,
       email: req.body.email || employee.email,
-      image: result.url,
+      image: uploadResponse.url,
       gender: req.body.gender || employee.gender,
       dateOfBirth: req.body.dateOfBirth || employee.dateOfBirth,
       dateOfJoining: req.body.dateOfJoining || employee.dateOfJoining,
@@ -195,8 +220,8 @@ module.exports.updateEmployee = catchAsyncErrors(async (req, res, next) => {
       panCardNo: req.body.panCardNo || employee.panCardNo,
       permanentAddress: req.body.permanentAddress || employee.permanentAddress,
       presentAddress: req.body.presentAddress || employee.presentAddress,
-      avatar: result.secure_url || employee.avatar,
-      cloudinary_id: result.public_id || employee.cloudinary_id,
+      avatar: uploadResponse.secure_url || employee.avatar,
+      cloudinary_id: uploadResponse.public_id || employee.cloudinary_id,
     };
 
     try {
@@ -209,9 +234,11 @@ module.exports.updateEmployee = catchAsyncErrors(async (req, res, next) => {
         updateEmployee,
       });
     } catch (error) {
+      console.log("Eror+++", error);
       return next(new ErrorHandler(error.message, 404));
     }
   } else {
+    console.log("Without image");
     const data = {
       userName: req.body.userName || employee.userName,
       lastName: req.body.lastName || employee.lastName,
@@ -244,6 +271,7 @@ module.exports.updateEmployee = catchAsyncErrors(async (req, res, next) => {
         updateEmployee,
       });
     } catch (error) {
+      console.log("err++++", error);
       return next(new ErrorHandler(error.message, 404));
     }
   }

@@ -37,6 +37,7 @@ app.use(
 );
 app.use(cookieParser());
 app.use(errorMiddleware);
+app.use('/uploads', express.static('uploads'));
 
 app.get("/", async (req, res) => {
   try {
