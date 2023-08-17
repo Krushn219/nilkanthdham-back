@@ -123,7 +123,7 @@ dist
 .vscode-test
 
 # remove uploaded file
-uploads
+# uploads
 
 # yarn v2
 .yarn/cache
