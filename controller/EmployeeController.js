@@ -44,15 +44,36 @@ module.exports.createEmployee = catchAsyncErrors(async (req, res, next) => {
 
     // image provided
     if (req.file) {
-      console.log("image provided++++");
       var locaFilePath = req.file.path;
 
       // upload image in cloudinory
-      var result = await uploadToCloudinary(locaFilePath);
+      // var result = await uploadToCloudinary(locaFilePath);
 
-      req.body.image = result.url;
-      req.body.avatar = result.result.secure_url;
-      req.body.cloudinary_id = result.result.public_id;
+      // Upload image to cloudinary using upload_stream
+    const uploadResponse = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "main", // You can adjust the folder where the image is uploaded
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result);
+          }
+        }
+      );
+      // Create a readable stream from the buffer and pipe it to uploadStream
+      const bufferStream = new Readable();
+      bufferStream.push(req.file.buffer);
+      bufferStream.push(null);
+
+      bufferStream.pipe(uploadStream);
+    });
+
+      req.body.image = uploadStream.url;
+      req.body.avatar = uploadStream.result.secure_url;
+      req.body.cloudinary_id = uploadStream.result.public_id;
 
       const employee = await Employee.create(req.body);
 
@@ -68,7 +89,6 @@ module.exports.createEmployee = catchAsyncErrors(async (req, res, next) => {
         employee,
       });
     } else {
-      console.log("image not provided++++");
 
       const employee = await Employee.create(req.body);
 
@@ -200,7 +220,6 @@ module.exports.updateEmployee = catchAsyncErrors(async (req, res, next) => {
 
       bufferStream.pipe(uploadStream);
     });
-    
 
     const data = {
       userName: req.body.userName || employee.userName,
@@ -234,7 +253,6 @@ module.exports.updateEmployee = catchAsyncErrors(async (req, res, next) => {
         updateEmployee,
       });
     } catch (error) {
-      console.log("Eror+++", error);
       return next(new ErrorHandler(error.message, 404));
     }
   } else {
