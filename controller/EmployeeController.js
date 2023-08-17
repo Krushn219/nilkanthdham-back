@@ -1,0 +1,272 @@
+const Employee = require("../models/Employee");
+const ErrorHandler = require("../utils/errorhandler");
+const ApiFeatures = require("../utils/apifeatures");
+const catchAsyncErrors = require("../middleware/catchAsyncErrors");
+const EmployeePresence = require("../models/EmployeePresence");
+const uploadToCloudinary = require("../services/uploadCloudinary");
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_Secret,
+});
+
+module.exports.createEmployee = catchAsyncErrors(async (req, res, next) => {
+  try {
+    // return if user already exist
+    const isExisted = await Employee.findOne({ email: req.body.email });
+    if (isExisted) {
+      return res.status(400).json({
+        success: false,
+        msg: "User Already Existed with this Email...",
+      });
+    }
+    // create new user
+    const {
+      userName,
+      email,
+      password,
+      gender,
+      DOB,
+      dateOfJoining,
+      status,
+      adharNumber,
+      contactNo,
+      emergencyContactNo,
+      employeeCode,
+      bloodGroup,
+      panCardNo,
+      permanentAddress,
+      presentAddress,
+    } = req.body;
+
+    // image provided
+    if (req.file) {
+      console.log("image provided++++")
+      var locaFilePath = req.file.path;
+
+      // upload image in cloudinory
+      var result = await uploadToCloudinary(locaFilePath);
+
+      req.body.image = result.url;
+      req.body.avatar = result.result.secure_url;
+      req.body.cloudinary_id = result.result.public_id;
+
+      const employee = await Employee.create(req.body);
+
+      if (!employee) {
+        return res.status(404).json({
+          success: false,
+          msg: "Can't Create Employee..",
+        });
+      }
+
+      return res.status(201).json({
+        success: true,
+        employee,
+      });
+    } else {
+      console.log("image not provided++++")
+
+      const employee = await Employee.create(req.body);
+
+      if (!employee) {
+        return res.status(404).json({
+          success: false,
+          msg: "Can't Create Employee..",
+        });
+      }
+
+      return res.status(201).json({
+        success: true,
+        employee,
+      });
+    }
+  } catch (error) {
+    console.log("error+++", error);
+    return next(new ErrorHandler(error.message, 404));
+  }
+});
+
+module.exports.getAllEmployee = catchAsyncErrors(async (req, res, next) => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  const formattedToday = `${year}-${month}-${day}`;
+  try {
+    const resultPerPage = Number(req.query.limit);
+
+    let totalEmployee = await Employee.countDocuments();
+    const sort = {};
+
+    if (req.query.sortBy && req.query.groupBy) {
+      sort[req.query.sortBy] = req.query.groupBy === "desc" ? -1 : 1;
+    }
+
+    const apiFeature = new ApiFeatures(Employee.find().sort(sort), req.query)
+      .filter()
+      .search()
+      .pagination(resultPerPage);
+    let employee = await apiFeature.query;
+    let filteredEmployeeCount = employee.length;
+
+    return res.status(200).json({
+      success: true,
+      totalEmployee: totalEmployee,
+      filteredEmployee: filteredEmployeeCount,
+      page: req.query.page,
+      limit: resultPerPage,
+      employee,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 404));
+  }
+});
+
+module.exports.getSingleEmployee = catchAsyncErrors(async (req, res, next) => {
+  const id = req.params.id;
+  try {
+    const employee = await Employee.findById(id).select("-password");
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        msg: "Employee not found",
+      });
+      return next(new ErrorHandler("Employee not found", 404));
+    }
+    return res.status(200).json({
+      success: true,
+      employee,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 404));
+  }
+});
+
+module.exports.updateEmployee = catchAsyncErrors(async (req, res, next) => {
+  const id = req.params.id;
+
+  if (req.body.password) {
+    console.log("req.body.password+++", req.body.password);
+    return res.status(400).json({
+      success: false,
+      msg: "Cannot edit password...",
+    });
+  }
+
+  const employee = await Employee.findById(id);
+
+  if (!employee) {
+    return res.status(404).json({
+      success: false,
+      msg: "Employee not found",
+    });
+  }
+  if (req.file) {
+    if (employee.cloudinary_id) {
+      // Delete image from cloudinary
+      await cloudinary.uploader.destroy(employee.cloudinary_id);
+    }
+
+    // Upload image to cloudinary
+    var locaFilePath = req.file.path;
+
+    var result = await uploadToCloudinary(locaFilePath);
+
+    const data = {
+      userName: req.body.userName || employee.userName,
+      lastName: req.body.lastName || employee.lastName,
+      email: req.body.email || employee.email,
+      image: result.url,
+      gender: req.body.gender || employee.gender,
+      dateOfBirth: req.body.dateOfBirth || employee.dateOfBirth,
+      dateOfJoining: req.body.dateOfJoining || employee.dateOfJoining,
+      status: req.body.status || employee.status,
+      adharNumber: req.body.adharNumber || employee.adharNumber,
+      contactNo: req.body.contactNo || employee.contactNo,
+      emergencyContactNo:
+        req.body.emergencyContactNo || employee.emergencyContactNo,
+      employeeCode: req.body.employeeCode || employee.employeeCode,
+      bloodGroup: req.body.bloodGroup || employee.bloodGroup,
+      panCardNo: req.body.panCardNo || employee.panCardNo,
+      permanentAddress: req.body.permanentAddress || employee.permanentAddress,
+      presentAddress: req.body.presentAddress || employee.presentAddress,
+      avatar: result.secure_url || employee.avatar,
+      cloudinary_id: result.public_id || employee.cloudinary_id,
+    };
+
+    try {
+      const updateEmployee = await Employee.findByIdAndUpdate(id, data, {
+        new: true,
+      });
+
+      return res.status(200).json({
+        success: true,
+        updateEmployee,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 404));
+    }
+  } else {
+    const data = {
+      userName: req.body.userName || employee.userName,
+      lastName: req.body.lastName || employee.lastName,
+      email: req.body.email || employee.email,
+      image: employee.image,
+      gender: req.body.gender || employee.gender,
+      dateOfBirth: req.body.dateOfBirth || employee.dateOfBirth,
+      dateOfJoining: req.body.dateOfJoining || employee.dateOfJoining,
+      status: req.body.status || employee.status,
+      adharNumber: req.body.adharNumber || employee.adharNumber,
+      contactNo: req.body.contactNo || employee.contactNo,
+      emergencyContactNo:
+        req.body.emergencyContactNo || employee.emergencyContactNo,
+      employeeCode: req.body.employeeCode || employee.employeeCode,
+      bloodGroup: req.body.bloodGroup || employee.bloodGroup,
+      panCardNo: req.body.panCardNo || employee.panCardNo,
+      permanentAddress: req.body.permanentAddress || employee.permanentAddress,
+      presentAddress: req.body.presentAddress || employee.presentAddress,
+      avatar: employee.avatar,
+      cloudinary_id: employee.cloudinary_id,
+    };
+
+    try {
+      const updateEmployee = await Employee.findByIdAndUpdate(id, data, {
+        new: true,
+      });
+
+      return res.status(200).json({
+        success: true,
+        updateEmployee,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 404));
+    }
+  }
+});
+
+module.exports.deleteEmployee = catchAsyncErrors(async (req, res, next) => {
+  const id = req.params.id;
+  const employee = await Employee.findById(id);
+  if (!employee) {
+    return res.status(404).json({
+      success: false,
+      msg: "Employee not found",
+    });
+  }
+  try {
+    const data = await Employee.findByIdAndDelete(id);
+
+    // Delete image from cloudinary
+    await cloudinary.uploader.destroy(employee.cloudinary_id);
+    return res.status(200).json({
+      success: true,
+      msg: "Deleted Successfully..",
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 404));
+  }
+});
