@@ -174,7 +174,8 @@ module.exports.updateEmployee = catchAsyncErrors(async (req, res, next) => {
     // Upload image to cloudinary
     var locaFilePath = req.file.path;
 
-    var result = await uploadToCloudinary(locaFilePath);
+    // var result = await uploadToCloudinary(locaFilePath);
+    const result = await cloudinary.uploader.upload(req.file.path);
 
     const data = {
       userName: req.body.userName || employee.userName,
