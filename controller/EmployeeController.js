@@ -70,10 +70,11 @@ module.exports.createEmployee = catchAsyncErrors(async (req, res, next) => {
 
       bufferStream.pipe(uploadStream);
     });
+    console.log("uploadResponse++++",uploadResponse)
 
       req.body.image = uploadResponse.url;
-      req.body.avatar = uploadResponse.result.secure_url;
-      req.body.cloudinary_id = uploadResponse.result.public_id;
+      req.body.avatar = uploadResponse.secure_url;
+      req.body.cloudinary_id = uploadResponse.public_id;
 
       const employee = await Employee.create(req.body);
 
