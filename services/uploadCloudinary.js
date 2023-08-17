@@ -28,7 +28,7 @@ const uploadToCloudinary = async (locaFilePath) => {
     .then((result) => {
       // Remove file from local uploads folder
 
-      fs.unlinkSync(locaFilePath);
+      // fs.unlinkSync(locaFilePath);
 
       return {
         message: "Success",
