@@ -15,7 +15,8 @@ router.route("/all").get(getAllEmployee);
 
 router.route("/:id").get(getSingleEmployee);
 
-router.route("/edit/:id").put(upload.single("image"),updateEmployee);
+// router.route("/edit/:id").put(upload.single("image"),updateEmployee);
+router.route("/edit/:id").put(updateEmployee);
 
 router.route("/:id").delete(deleteEmployee);
 
