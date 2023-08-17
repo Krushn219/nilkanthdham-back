@@ -149,8 +149,8 @@ module.exports.getSingleEmployee = catchAsyncErrors(async (req, res, next) => {
 module.exports.updateEmployee = catchAsyncErrors(async (req, res, next) => {
   const id = req.params.id;
 
+
   if (req.body.password) {
-    console.log("req.body.password+++", req.body.password);
     return res.status(400).json({
       success: false,
       msg: "Cannot edit password...",
