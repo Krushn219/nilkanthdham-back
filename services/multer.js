@@ -2,9 +2,9 @@ const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs");
 
-if (!fs.existsSync("./uploads")) {
-  fs.mkdirSync("./uploads");
-}
+// if (!fs.existsSync("./uploads")) {
+//   fs.mkdirSync("./uploads");
+// }
 
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
