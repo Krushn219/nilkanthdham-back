@@ -3,8 +3,9 @@ const bcrypt = require("bcryptjs");
 
 const employeePresenceSchema = new mongoose.Schema(
   {
-    EmployeeName: String,
-    EmployeeID: { type: mongoose.Schema.Types.ObjectId, ref: "Employee" },
+    employeeId:{ type: mongoose.Schema.Types.ObjectId, ref: "Employee" },
+    employeeName: String,
+    employeeCode: String,
     date: String,
     present: { type: Boolean, default: 0 },
     workHours: { type: String, default: 0 },
@@ -12,5 +13,5 @@ const employeePresenceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-var Employee = mongoose.model("EmployeePresence", employeePresenceSchema);
-module.exports = Employee;
+var EmployeePresence = mongoose.model("EmployeePresence", employeePresenceSchema);
+module.exports = EmployeePresence;
