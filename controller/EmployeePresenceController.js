@@ -31,9 +31,10 @@ module.exports.createEmployeePresence = catchAsyncErrors(
           // Create a new record if it doesn't exist
           const employeePresence = await EmployeePresence.create({
             employeeID: data.id,
-            employeeName: data.employeeName,
+            userName: data.employeeName,
             employeeCode: data.employeeCode,
             date: data.date,
+            image:data.image,
             present: data.present,
             workHours: data.workHours,
           });

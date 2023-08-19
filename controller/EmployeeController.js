@@ -116,10 +116,12 @@ module.exports.getAllEmployee = catchAsyncErrors(async (req, res, next) => {
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");
+  const { date } = req.query;
 
   const formattedToday = `${year}-${month}-${day}`;
   try {
     const resultPerPage = Number(req.query.limit);
+    const { date } = req.query; // Get the selected date from the query parameter
 
     let totalEmployee = await Employee.countDocuments();
     const sort = {};
@@ -128,7 +130,7 @@ module.exports.getAllEmployee = catchAsyncErrors(async (req, res, next) => {
       sort[req.query.sortBy] = req.query.groupBy === "desc" ? -1 : 1;
     }
 
-    const apiFeature = new ApiFeatures(Employee.find().sort(sort), req.query)
+    const apiFeature = new ApiFeatures(Employee.find({ date: date }).sort(sort), req.query)
       .filter()
       .search()
       .pagination(resultPerPage);
@@ -318,3 +320,26 @@ module.exports.deleteEmployee = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler(error.message, 404));
   }
 });
+
+// In your backend controller file (e.g., employeeController.js)
+module.exports.getEmployeeDataForPastDate = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { date } = req.params; // Get the date parameter from the URL
+
+    // Parse the date parameter into a JavaScript Date object
+    const selectedDate = new Date(date);
+
+    // Assuming you have a model named EmployeePresence to fetch data
+    const employeeDataForPastDate = await EmployeePresence.find({
+      date: selectedDate.toISOString().split("T")[0], // Format the date as needed
+    });
+
+    return res.status(200).json({
+      success: true,
+      employee: employeeDataForPastDate,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 404));
+  }
+});
+

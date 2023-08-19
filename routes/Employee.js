@@ -5,6 +5,7 @@ const {
   getSingleEmployee,
   updateEmployee,
   deleteEmployee,
+  getEmployeeDataForPastDate
 } = require("../controller/EmployeeController");
 const router = express.Router();
 const upload = require("../services/multer")
@@ -19,5 +20,8 @@ router.route("/edit/:id").put(upload.single("image"),updateEmployee);
 // router.route("/edit/:id").put(updateEmployee);
 
 router.route("/:id").delete(deleteEmployee);
+
+// All Employee Data from past
+router.route("/pastDateData/:date").get(getEmployeeDataForPastDate);
 
 module.exports = router;
