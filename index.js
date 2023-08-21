@@ -13,6 +13,7 @@ const bodyParser = require("body-parser");
 const errorMiddleware = require("./middleware/error");
 const Employee = require("./models/Employee");
 const ApiFeatures = require("./utils/apifeatures");
+const session = require('express-session');
 
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -38,6 +39,14 @@ app.use(
 app.use(cookieParser());
 app.use(errorMiddleware);
 app.use('/uploads', express.static('uploads'));
+// Use express-session middleware
+app.use(
+  session({
+    secret: 'your-secret-key', // Replace with your secret key
+    resave: false,
+    saveUninitialized: false,
+  })
+);
 
 app.get("/", async (req, res) => {
   try {
@@ -66,6 +75,7 @@ app.use("/api/work", require("./routes/WorkExperience"));
 app.use("/api/leave", require("./routes/LeaveApplication"));
 app.use("/api/employee", require("./routes/Employee"));
 app.use("/api/employeePresence", require("./routes/EmployeePresence"));
+app.use("/api/login", require("./routes/Login"));
 
 app.listen(PORT, function (err) {
   if (err) {

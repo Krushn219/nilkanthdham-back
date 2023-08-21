@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const Joi = require("joi");
+const boolean = require("joi/lib/types/boolean");
 
 const employeeSchema = new mongoose.Schema(
   {
@@ -44,6 +45,7 @@ const employeeSchema = new mongoose.Schema(
     panCardNo: { type: String },
     permanentAddress: { type: String },
     presentAddress: { type: String },
+    isAdmin:{type:Boolean,default:false},
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },

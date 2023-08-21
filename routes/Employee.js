@@ -24,4 +24,5 @@ router.route("/:id").delete(deleteEmployee);
 // All Employee Data from past
 router.route("/pastDateData/:date").get(getEmployeeDataForPastDate);
 
+
 module.exports = router;

@@ -2,38 +2,72 @@ const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const Employee = require("../models/Employee");
 const jwt = require("jsonwebtoken");
 let jwtKey = process.env.JWTKEY;
+const bcrypt = require('bcryptjs');
 
-module.exports.LogIn = catchAsyncErrors(async (req, res, next) => {
-  const data = await Employee.findOne({ Email: req.body.email });
-  // console.log("data++++", data);
+module.exports.LogIn =catchAsyncErrors( async (req, res, next) => {
   try {
-    const employee = await Employee.findOne(
-      { Email: req.body.email },
-      "Password _id Account FirstName LastName"
-    );
+    const employee = await Employee.findOne({ email: req.body.email });
+    
     if (!employee) {
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
+        msg: 'User not found',
       });
-    } else {
-      if (employee.Password == req.body.password) {
-        emp = {
-          _id: employee._id,
-          Account: employee.Account,
-          FirstName: employee.FirstName,
-          LastName: employee.LastName,
-        };
-        var token = jwt.sign(emp, jwtKey);
-
-        res.send(token);
-      } else {
-        res.sendStatus(400);
-      }
     }
+
+    const isPasswordValid = await bcrypt.compare(req.body.password, employee.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        msg: 'Invalid password',
+      });
+    }
+
+    // If the email and password are correct, store user data in the session
+    req.session.user = {
+      _id: employee._id,
+      isAdmin: employee.isAdmin,
+      userName: employee.userName,
+      image:employee.image
+    };
+
+    // const token = jwt.sign(tokenPayload, jwtKey, { expiresIn: '1h' });
+
+    res.status(200).json({
+      success: true,
+      msg: 'Login successful',
+      // token,
+    });
   } catch (error) {
-    console.log("Error+++", error);
+    console.error('Error:', error);
+    res.status(500).json({
+      success: false,
+      msg: 'Internal server error',
+    });
   }
 });
+
+module.exports.Logout = catchAsyncErrors(async(req,res,next)=>{
+   // Destroy the session and clear the session cookie
+   req.session.destroy((err) => {
+    if (err) {
+      console.error('Logout failed:', err);
+      res.status(500).json({
+        success: false,
+        msg: 'Logout failed',
+      });
+    } else {
+      res.clearCookie('connect.sid'); // Clear the session cookie
+      res.status(200).json({
+        success: true,
+        msg: 'Logout successful',
+      });
+    }
+  });
+})
+
+
 // module.exports.LogIn = catchAsyncErrors(async (req, res, next) => {
 //   var arr = [
 //     {
