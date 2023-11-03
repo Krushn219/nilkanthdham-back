@@ -24,20 +24,20 @@ module.exports.LogIn =catchAsyncErrors( async (req, res, next) => {
       });
     }
 
-    // If the email and password are correct, store user data in the session
-    req.session.user = {
+    // If the email and password are correct, store user data in the local storage
+    const tokenPayload = {
       _id: employee._id,
       isAdmin: employee.isAdmin,
       userName: employee.userName,
-      image:employee.image
+      image: employee.image,
     };
 
-    // const token = jwt.sign(tokenPayload, jwtKey, { expiresIn: '1h' });
+    const token = jwt.sign(tokenPayload, jwtKey, { expiresIn: '1h' });
 
     res.status(200).json({
       success: true,
       msg: 'Login successful',
-      // token,
+      token,
     });
   } catch (error) {
     console.error('Error:', error);
@@ -66,88 +66,3 @@ module.exports.Logout = catchAsyncErrors(async(req,res,next)=>{
     }
   });
 })
-
-
-// module.exports.LogIn = catchAsyncErrors(async (req, res, next) => {
-//   var arr = [
-//     {
-//       name: "s1",
-//       subject: [
-//         {
-//           subject: "math",
-//           total: 83,
-//         },
-//         {
-//           subject: "sci",
-//           total: 87,
-//         },
-//         {
-//           subject: "eng",
-//           total: 85,
-//         },
-//       ],
-//     },
-//     {
-//       name: "s2",
-//       subject: [
-//         {
-//           subject: "math",
-//           total: 75,
-//         },
-//         {
-//           subject: "sci",
-//           total: 69,
-//         },
-//         {
-//           subject: "eng",
-//           total: 87,
-//         },
-//       ],
-//     },
-//     {
-//       name: "s3",
-//       subject: [
-//         {
-//           subject: "math",
-//           total: 89,
-//         },
-//         {
-//           subject: "sci",
-//           total: 92,
-//         },
-//         {
-//           subject: "eng",
-//           total: 92,
-//         },
-//       ],
-//     },
-//   ];
-//   try {
-//     mathMarks = [];
-//     sciMarks = [];
-//     engMarks = [];
-//     totalMarks = [];
-//     mathTotal = arr.forEach((student) => {
-//       student.subject.forEach((subject) => {
-//         totalMarks.push(subject.total);
-//         if (subject.subject == "math") {
-//           mathMarks.push(subject.total);
-//         }
-//         if (subject.subject == "sci") {
-//           sciMarks.push(subject.total);
-//         }
-//         if (subject.subject == "eng") {
-//           engMarks.push(subject.total);
-//         }
-//       });
-//     });
-//     console.log("mathMarks+++++", mathMarks.reduce(getSum, 0));
-//     console.log("sciMarks+++++", sciMarks.reduce(getSum, 0));
-//     console.log("engMarks+++++", engMarks.reduce(getSum, 0));
-//     console.log("totalMarks+++++", totalMarks.reduce(getSum, 0));
-
-//     function getSum(total, num) {
-//       return total + Math.round(num);
-//     }
-//   } catch (error) {}
-// });

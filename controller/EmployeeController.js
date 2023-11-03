@@ -25,21 +25,20 @@ module.exports.createEmployee = catchAsyncErrors(async (req, res, next) => {
     }
     // create new user
     const {
+      dateOfJoining,
       userName,
+      lastName,
+      permanentAddress,
+      contactNo,
+      gender,
       email,
       password,
-      gender,
-      DOB,
-      dateOfJoining,
-      status,
+      dateOfBirth,
       adharNumber,
-      contactNo,
-      emergencyContactNo,
-      employeeCode,
-      bloodGroup,
       panCardNo,
-      permanentAddress,
-      presentAddress,
+      accountno,
+      ifsc,
+      emergencyContactNo,
     } = req.body;
 
     // image provided
@@ -50,27 +49,26 @@ module.exports.createEmployee = catchAsyncErrors(async (req, res, next) => {
       // var result = await uploadToCloudinary(locaFilePath);
 
       // Upload image to cloudinary using upload_stream
-    const uploadResponse = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: "main", // You can adjust the folder where the image is uploaded
-        },
-        (error, result) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve(result);
+      const uploadResponse = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: "main", // You can adjust the folder where the image is uploaded
+          },
+          (error, result) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result);
+            }
           }
-        }
-      );
-      // Create a readable stream from the buffer and pipe it to uploadStream
-      const bufferStream = new Readable();
-      bufferStream.push(req.file.buffer);
-      bufferStream.push(null);
+        );
+        // Create a readable stream from the buffer and pipe it to uploadStream
+        const bufferStream = new Readable();
+        bufferStream.push(req.file.buffer);
+        bufferStream.push(null);
 
-      bufferStream.pipe(uploadStream);
-    });
-    console.log("uploadResponse++++",uploadResponse)
+        bufferStream.pipe(uploadStream);
+      });
 
       req.body.image = uploadResponse.url;
       req.body.avatar = uploadResponse.secure_url;
@@ -90,7 +88,6 @@ module.exports.createEmployee = catchAsyncErrors(async (req, res, next) => {
         employee,
       });
     } else {
-
       const employee = await Employee.create(req.body);
 
       if (!employee) {
@@ -130,7 +127,10 @@ module.exports.getAllEmployee = catchAsyncErrors(async (req, res, next) => {
       sort[req.query.sortBy] = req.query.groupBy === "desc" ? -1 : 1;
     }
 
-    const apiFeature = new ApiFeatures(Employee.find({ date: date }).sort(sort), req.query)
+    const apiFeature = new ApiFeatures(
+      Employee.find({ date: date }).sort(sort),
+      req.query
+    )
       .filter()
       .search()
       .pagination(resultPerPage);
@@ -322,24 +322,25 @@ module.exports.deleteEmployee = catchAsyncErrors(async (req, res, next) => {
 });
 
 // In your backend controller file (e.g., employeeController.js)
-module.exports.getEmployeeDataForPastDate = catchAsyncErrors(async (req, res, next) => {
-  try {
-    const { date } = req.params; // Get the date parameter from the URL
+module.exports.getEmployeeDataForPastDate = catchAsyncErrors(
+  async (req, res, next) => {
+    try {
+      const { date } = req.params; // Get the date parameter from the URL
 
-    // Parse the date parameter into a JavaScript Date object
-    const selectedDate = new Date(date);
+      // Parse the date parameter into a JavaScript Date object
+      const selectedDate = new Date(date);
 
-    // Assuming you have a model named EmployeePresence to fetch data
-    const employeeDataForPastDate = await EmployeePresence.find({
-      date: selectedDate.toISOString().split("T")[0], // Format the date as needed
-    });
+      // Assuming you have a model named EmployeePresence to fetch data
+      const employeeDataForPastDate = await EmployeePresence.find({
+        date: selectedDate.toISOString().split("T")[0], // Format the date as needed
+      });
 
-    return res.status(200).json({
-      success: true,
-      employee: employeeDataForPastDate,
-    });
-  } catch (error) {
-    return next(new ErrorHandler(error.message, 404));
+      return res.status(200).json({
+        success: true,
+        employee: employeeDataForPastDate,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 404));
+    }
   }
-});
-
+);
