@@ -26,6 +26,7 @@ const employeePresenceSchema = new mongoose.Schema(
     },
     present: { type: Boolean, default: 0 },
     workHours: { type: String, default: 0 },
+    dailyWages: { type: String, default: 0 },
   },
   { timestamps: true }
 );

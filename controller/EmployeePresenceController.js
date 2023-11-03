@@ -24,6 +24,7 @@ module.exports.createEmployeePresence = catchAsyncErrors(
           isExisted.employeeCode = data.employeeCode;
           isExisted.present = data.present;
           isExisted.workHours = data.workHours;
+          isExisted.dailyWages = data.dailyWages;
 
           await isExisted.save(); // Save the updated record
           createdRecords.push(isExisted); // Add it to the created records array
@@ -37,6 +38,7 @@ module.exports.createEmployeePresence = catchAsyncErrors(
             image:data.image,
             present: data.present,
             workHours: data.workHours,
+            dailyWages:data.dailyWages
           });
 
           createdRecords.push(employeePresence);
