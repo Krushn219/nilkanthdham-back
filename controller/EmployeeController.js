@@ -13,16 +13,31 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_Secret,
 });
 
+function formatDate(inputDate) {
+  // Ensure inputDate is a valid Date object
+  if (!(inputDate instanceof Date) || isNaN(inputDate)) {
+    return "Invalid Date";
+  }
+
+  // Extract day, month, and year components
+  const day = inputDate.getUTCDate();
+  const month = inputDate.getUTCMonth() + 1;
+  const year = inputDate.getUTCFullYear();
+
+  // Create the formatted date string
+  return `${day}/${month}/${year}`;
+}
+
 module.exports.createEmployee = catchAsyncErrors(async (req, res, next) => {
   try {
     // return if user already exist
-    const isExisted = await Employee.findOne({ email: req.body.email });
-    if (isExisted) {
-      return res.status(400).json({
-        success: false,
-        msg: "User Already Existed with this Email...",
-      });
-    }
+    // const isExisted = await Employee.findOne({ email: req.body.email });
+    // if (isExisted) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     msg: "User Already Existed with this Email...",
+    //   });
+    // }
     // create new user
     const {
       dateOfJoining,
@@ -40,6 +55,21 @@ module.exports.createEmployee = catchAsyncErrors(async (req, res, next) => {
       ifsc,
       emergencyContactNo,
     } = req.body;
+
+    // Input date string
+    const dateOfJoiningString = req.body.dateOfJoining;
+    const dateOfBirthString = req.body.dateOfBirth;
+
+    // Step 1: Parse the date string into a Date object
+    const parsedJoiningDate = new Date(dateOfJoiningString);
+    const parsedBirthDate = new Date(dateOfBirthString);
+
+    // Create the formatted date string
+    const formattedJoiningDate = formatDate(parsedJoiningDate);
+    const formattedBirthDate = formatDate(parsedBirthDate);
+
+    req.body.dateOfJoining = formattedJoiningDate;
+    req.body.dateOfBirth = formattedBirthDate;
 
     // image provided
     if (req.file) {
@@ -173,6 +203,35 @@ module.exports.getSingleEmployee = catchAsyncErrors(async (req, res, next) => {
 module.exports.updateEmployee = catchAsyncErrors(async (req, res, next) => {
   const id = req.params.id;
 
+  // Input date strings from the request body
+const dateOfJoiningString = req.body.dateOfJoining;
+const dateOfBirthString = req.body.dateOfBirth;
+
+// Check if dateOfJoiningString is provided before parsing and formatting
+if (dateOfJoiningString) {
+  // Step 1: Parse the date string into a Date object
+  const parsedJoiningDate = new Date(dateOfJoiningString);
+
+  // Create the formatted date string
+  const formattedJoiningDate = formatDate(parsedJoiningDate);
+
+  // Update the request body with the formatted date
+  req.body.dateOfJoining = formattedJoiningDate;
+}
+
+// Check if dateOfBirthString is provided before parsing and formatting
+if (dateOfBirthString) {
+  // Step 1: Parse the date string into a Date object
+  const parsedBirthDate = new Date(dateOfBirthString);
+
+  // Create the formatted date string
+  const formattedBirthDate = formatDate(parsedBirthDate);
+
+  // Update the request body with the formatted date
+  req.body.dateOfBirth = formattedBirthDate;
+}
+
+
   if (req.body.password) {
     return res.status(400).json({
       success: false,
@@ -232,16 +291,16 @@ module.exports.updateEmployee = catchAsyncErrors(async (req, res, next) => {
       gender: req.body.gender || employee.gender,
       dateOfBirth: req.body.dateOfBirth || employee.dateOfBirth,
       dateOfJoining: req.body.dateOfJoining || employee.dateOfJoining,
-      status: req.body.status || employee.status,
       adharNumber: req.body.adharNumber || employee.adharNumber,
       contactNo: req.body.contactNo || employee.contactNo,
       emergencyContactNo:
         req.body.emergencyContactNo || employee.emergencyContactNo,
-      employeeCode: req.body.employeeCode || employee.employeeCode,
-      bloodGroup: req.body.bloodGroup || employee.bloodGroup,
       panCardNo: req.body.panCardNo || employee.panCardNo,
+      bankname: req.body.bankname || employee.bankname,
+      accountno: req.body.accountno || employee.accountno,
+      ifsc: req.body.ifsc || employee.ifsc,
+      status: req.body.status || employee.status,
       permanentAddress: req.body.permanentAddress || employee.permanentAddress,
-      presentAddress: req.body.presentAddress || employee.presentAddress,
       avatar: uploadResponse.secure_url || employee.avatar,
       cloudinary_id: uploadResponse.public_id || employee.cloudinary_id,
     };
@@ -261,23 +320,22 @@ module.exports.updateEmployee = catchAsyncErrors(async (req, res, next) => {
   } else {
     console.log("Without image");
     const data = {
+      image: employee.image,
+      dateOfJoining: req.body.dateOfJoining || employee.dateOfJoining,
       userName: req.body.userName || employee.userName,
       lastName: req.body.lastName || employee.lastName,
-      email: req.body.email || employee.email,
-      image: employee.image,
       gender: req.body.gender || employee.gender,
       dateOfBirth: req.body.dateOfBirth || employee.dateOfBirth,
-      dateOfJoining: req.body.dateOfJoining || employee.dateOfJoining,
-      status: req.body.status || employee.status,
       adharNumber: req.body.adharNumber || employee.adharNumber,
       contactNo: req.body.contactNo || employee.contactNo,
       emergencyContactNo:
         req.body.emergencyContactNo || employee.emergencyContactNo,
-      employeeCode: req.body.employeeCode || employee.employeeCode,
-      bloodGroup: req.body.bloodGroup || employee.bloodGroup,
       panCardNo: req.body.panCardNo || employee.panCardNo,
+      bankname: req.body.bankname || employee.bankname,
+      accountno: req.body.accountno || employee.accountno,
+      ifsc: req.body.ifsc || employee.ifsc,
+      status: req.body.status || employee.status,
       permanentAddress: req.body.permanentAddress || employee.permanentAddress,
-      presentAddress: req.body.presentAddress || employee.presentAddress,
       avatar: employee.avatar,
       cloudinary_id: employee.cloudinary_id,
     };

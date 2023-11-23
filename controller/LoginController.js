@@ -1,7 +1,7 @@
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const Employee = require("../models/Employee");
 const jwt = require("jsonwebtoken");
-let jwtKey = process.env.JWTKEY;
+let jwtKey = process.env.JWT_SECRET;
 const bcrypt = require('bcryptjs');
 
 module.exports.LogIn =catchAsyncErrors( async (req, res, next) => {

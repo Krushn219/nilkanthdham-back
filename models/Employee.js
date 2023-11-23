@@ -7,7 +7,7 @@ const boolean = require("joi/lib/types/boolean");
 
 const employeeSchema = new mongoose.Schema(
   {
-    email: { type: String, trim: true, unique: true },
+    email: { type: String, trim: true, default: "" },
     password: { type: String },
     image: {
       type: String,
@@ -33,6 +33,7 @@ const employeeSchema = new mongoose.Schema(
     accountno: { type: String, required: true },
     ifsc: { type: String, required: true },
     emergencyContactNo: { type: String },
+    employeeCode: { type: Number, unique: true },
 
     status: { type: String, default: "inActive", enum: ["active", "inActive"] },
 
@@ -60,17 +61,42 @@ const employeeSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-//   model: "Employee",
-//   field: "EmployeeID",
-// });
+// employeeSchema.plugin(mongooseSequence, { inc_field: "employeeCode" });
 
 employeeSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    next();
+  if (!this.employeeCode) {
+    const Employee = mongoose.model("Employee");
+
+    try {
+
+      const highestEmployee = await Employee.findOne().sort({ employeeCode: -1 }).exec();
+      this.employeeCode = highestEmployee ? highestEmployee.employeeCode + 1 : 1;
+    } catch (error) {
+      console.error("Error finding highest employee:", error);
+    }
   }
 
-  this.password = await bcrypt.hash(this.password, 10);
+  next();
 });
+
+
+// employeeSchema.pre("save", async function (next) {
+//   if (!this.employeeCode) {
+//     const Employee = mongoose.model("Employee");
+//     const highestEmployee = await Employee.findOne({}).sort({ employeeCode: -1 });
+//     console.log("highestEmployee++++",highestEmployee)
+//     this.employeeCode = highestEmployee ? highestEmployee.employeeCode + 1 : 1;
+//   }
+//   next();
+// });
+
+// employeeSchema.pre("save", async function (next) {
+//   if (!this.isModified("password")) {
+//     next();
+//   }
+
+//   this.password =  bcrypt.hash(this.password, 10);
+// });
 
 // JWT TOKEN
 employeeSchema.methods.getJWTToken = function () {
@@ -80,9 +106,9 @@ employeeSchema.methods.getJWTToken = function () {
 };
 
 // Compare Password
-employeeSchema.methods.comparePassword = async function (password) {
-  return await bcrypt.compare(password, this.password);
-};
+// employeeSchema.methods.comparePassword = async function (password) {
+//   return await bcrypt.compare(password, this.password);
+// };
 
 // Generating Password Reset Token
 employeeSchema.methods.getResetPasswordToken = function () {
