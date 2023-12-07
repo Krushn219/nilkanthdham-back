@@ -6,6 +6,7 @@ const {
   updateEmployeePresence,
   deleteEmployeePresence,
   getAllEmployeePresenceByDate,
+  getEmployeeDataByDate
 } = require("../controller/EmployeePresenceController");
 const router = express.Router();
 
@@ -20,5 +21,10 @@ router.route("/:id").get(getSingleEmployeePresence);
 router.route("/:id").put(updateEmployeePresence);
 
 router.route("/:id").delete(deleteEmployeePresence);
+
+//data by date
+router.route("/databydate").post(getEmployeeDataByDate);
+
+
 
 module.exports = router;

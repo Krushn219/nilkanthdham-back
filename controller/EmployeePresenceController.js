@@ -3,6 +3,8 @@ const ErrorHandler = require("../utils/errorhandler");
 const ApiFeatures = require("../utils/apifeatures");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const Employee = require("../models/Employee");
+const moment = require("moment");
+const dayjs = require("dayjs");
 
 module.exports.createEmployeePresence = catchAsyncErrors(
   async (req, res, next) => {
@@ -12,7 +14,6 @@ module.exports.createEmployeePresence = catchAsyncErrors(
       const createdRecords = [];
 
       for (var data of presenceData) {
-
         const isExisted = await EmployeePresence.findOne({
           employeeCode: data.employeeCode,
           date: data.date,
@@ -35,10 +36,10 @@ module.exports.createEmployeePresence = catchAsyncErrors(
             userName: data.employeeName,
             employeeCode: data.employeeCode,
             date: data.date,
-            image:data.image,
+            image: data.image,
             present: data.present,
             workHours: data.workHours,
-            dailyWages:data.dailyWages
+            dailyWages: data.dailyWages,
           });
 
           createdRecords.push(employeePresence);
@@ -205,6 +206,34 @@ module.exports.deleteEmployeePresence = catchAsyncErrors(
       });
     } catch (error) {
       return next(new ErrorHandler(error.message, 404));
+    }
+  }
+);
+
+module.exports.getEmployeeDataByDate = catchAsyncErrors(
+  async (req, res, next) => {
+    const requestedDate = req.query.date;
+    // console.log("requestedDate++++", requestedDate);
+    // Attempt to parse the date using dayjs
+    const parsedDate = dayjs(requestedDate, { strict: false });
+
+    if (!parsedDate.isValid()) {
+      throw new Error(`Invalid date format for "${requestedDate}"`);
+    }
+    // Format the date as "YYYY-MM-DD"
+    const formattedDate = parsedDate.format("YYYY-MM-DD");
+    console.log("formattedDate++++", formattedDate);
+
+    try {
+      // Fetch employee presence data for the specified day
+      const employeePresenceData = await EmployeePresence.find({
+        date: formattedDate,
+      });
+
+      res.json(employeePresenceData);
+    } catch (error) {
+      console.error("Error fetching employee presence data:", error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
   }
 );

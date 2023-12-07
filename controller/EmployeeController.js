@@ -379,18 +379,16 @@ module.exports.deleteEmployee = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
-// In your backend controller file (e.g., employeeController.js)
 module.exports.getEmployeeDataForPastDate = catchAsyncErrors(
   async (req, res, next) => {
     try {
-      const { date } = req.params; // Get the date parameter from the URL
-
+      const { date } = req.params; 
       // Parse the date parameter into a JavaScript Date object
       const selectedDate = new Date(date);
 
-      // Assuming you have a model named EmployeePresence to fetch data
+      //  to fetch data
       const employeeDataForPastDate = await EmployeePresence.find({
-        date: selectedDate.toISOString().split("T")[0], // Format the date as needed
+        date: selectedDate.toISOString().split("T")[0],
       });
 
       return res.status(200).json({
